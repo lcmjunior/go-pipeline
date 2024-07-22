@@ -1,0 +1,30 @@
+trigger:
+- main  # Ou a ramificação que você deseja acionar o pipeline
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: GoTool@0
+  inputs:
+    version: '1.22.4'  # Versão específica do Go que você deseja usar
+
+- script: |
+    go mod download  # Baixa as dependências do módulo
+    go build -o bin/MyApp
+    go test -cover ./...
+  displayName: 'Build Azure Function'
+
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(Build.SourcesDirectory)/bin/MyApp'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/MyApp.zip'
+    replaceExistingArchive: true
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'MyApp'
+    publishLocation: 'Container'
